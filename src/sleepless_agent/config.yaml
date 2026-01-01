@@ -3,9 +3,9 @@ claude_code:
   model: claude-sonnet-4-5-20250929
   night_start_hour: 1
   night_end_hour: 9
-  threshold_day: 20.0
-  threshold_night: 80.0
-  usage_command: claude /usage
+  threshold_day: 100.0
+  threshold_night: 100.0
+  usage_command: python3 /Users/jing/Desktop/code/sleepless-agent/glm_usage.py
 
 git:
   enabled: false  # Set to true to enable git commits and branching
@@ -67,7 +67,7 @@ auto_generation:
         - Your response MUST be 1-2 sentences max
 
         Focus on completing or improving what already exists rather than starting new projects.
-      weight: 0.45
+      weight: 0.45  # Restored to 45% for refine_focused mode
     - name: balanced
       prompt: |-
         Review the workspace state and generate a valuable task.
@@ -108,7 +108,7 @@ auto_generation:
         - For general refinements: Use [REFINE] followed by description
         - For new tasks: Use [NEW] followed by description
         - Your response MUST be 1-2 sentences max
-      weight: 0.35
+      weight: 0.45  # Balanced with refine_focused at 45%
     - name: new_friendly
       prompt: |-
         Generate an interesting and valuable task for the workspace.
@@ -149,4 +149,4 @@ auto_generation:
         - For general refinements: Use [REFINE] followed by description
         - For new tasks: Use [NEW] followed by description
         - Your response MUST be 1-2 sentences max
-      weight: 0.20
+      weight: 0.10  # Reduced from 0.20 to prioritize completing existing work

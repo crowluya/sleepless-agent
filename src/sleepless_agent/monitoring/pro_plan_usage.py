@@ -353,9 +353,9 @@ class ProPlanUsageChecker:
 
         usage_percent: Optional[float] = None
 
-        # Primary format: "<number>% used"
+        # Primary format: "<number>% used" - support both English and Chinese (GLM Coding Plan)
         for line in lines:
-            if not re.search(r"(used|usage|messages|remaining|limit)", line, re.IGNORECASE):
+            if not re.search(r"(used|usage|messages|remaining|limit|已使用|使用量|Token|配额)", line, re.IGNORECASE):
                 continue
             match = re.search(r'(\d+(?:\.\d+)?)\s*%\s*(?:used|usage|of|remaining)?', line, re.IGNORECASE)
             if match:
