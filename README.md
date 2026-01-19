@@ -391,7 +391,7 @@ To focus on continuously improving a single Git repository, configure as follows
 # Enable Git integration
 git:
   enabled: true
-  remote_repo_url: git@github.com:username/your-repo.git
+  remote_repo_url: git@github.com:crowluya/py38-cc-ds.git
   auto_create_repo: true
 
 # Enable auto-generation

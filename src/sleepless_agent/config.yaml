@@ -14,7 +14,7 @@ claude_code:
 git:
   enabled: true  # Set to true to enable git commits and branching
   use_remote_repo: true
-  remote_repo_url: git@github.com:crowluya/open-code-py-38.git
+  remote_repo_url: git@github.com:crowluya/py38-cc-ds.git
   auto_create_repo: true
 
 agent:
