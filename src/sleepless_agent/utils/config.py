@@ -11,7 +11,9 @@ from typing import Any, Iterable
 import yaml
 from dotenv import load_dotenv
 
-load_dotenv()
+# Try .env.local first, fallback to .env
+if not load_dotenv(".env.local"):
+    load_dotenv()
 
 CONFIG_ENV_VAR = "SLEEPLESS_AGENT_CONFIG_FILE"
 DEFAULT_CONFIG_NAME = "config.yaml"

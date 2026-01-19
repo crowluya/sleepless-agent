@@ -9,6 +9,7 @@ import sys
 import time
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Optional, Tuple
 
 try:  # pragma: no cover - platform dependent
@@ -66,7 +67,8 @@ class ProPlanUsageChecker:
         Args:
             command: CLI command to run (default: "claude usage")
         """
-        self.command = command
+        # Auto-resolve glm_usage.py to project root path
+        self.command = self._resolve_glm_usage_path(command)
         self.last_check_time: Optional[datetime] = None
         self.cached_usage: Optional[Tuple[float, Optional[datetime]]] = None
         self.cache_duration_seconds = 60
@@ -635,6 +637,86 @@ class ProPlanUsageChecker:
         if candidate <= reference:
             candidate += timedelta(days=1)
         return candidate
+
+    @staticmethod
+    def _resolve_glm_usage_path(command: str) -> str:
+        """Auto-resolve glm_usage.py to project root path.
+
+        If command contains 'glm_usage.py', finds project root by looking
+        for pyproject.toml and resolves the script path relative to it.
+
+        Args:
+            command: Original command string
+
+        Returns:
+            Resolved command with absolute path to glm_usage.py, or original command
+        """
+        if "glm_usage.py" not in command:
+            return command
+
+        # Split command to extract the script path
+        parts = command.split()
+        script_part = None
+        script_index = -1
+
+        for i, part in enumerate(parts):
+            if "glm_usage.py" in part:
+                script_part = part
+                script_index = i
+                break
+
+        if script_part is None:
+            return command
+
+        # If already an absolute path that exists, return as-is
+        if os.path.isabs(script_part) and os.path.exists(script_part):
+            return command
+
+        # Find project root (look for pyproject.toml)
+        current_dir = Path(__file__).resolve().parent
+        project_root = None
+
+        # Search up for pyproject.toml
+        for parent in [current_dir, *current_dir.parents]:
+            if (parent / "pyproject.toml").exists():
+                project_root = parent
+                break
+
+        if project_root is None:
+            # Fallback: search from current working directory
+            cwd = Path.cwd()
+            for parent in [cwd, *cwd.parents]:
+                if (parent / "pyproject.toml").exists():
+                    project_root = parent
+                    break
+
+        if project_root is None:
+            # Can't find project root, return original
+            logger.warning("usage.glm_usage.project_root_not_found")
+            return command
+
+        # Check if glm_usage.py exists at project root
+        glm_script = project_root / "glm_usage.py"
+        if not glm_script.exists():
+            # Also check in src/sleepless_agent directory
+            glm_script = project_root / "src" / "sleepless_agent" / "glm_usage.py"
+
+        if not glm_script.exists():
+            logger.warning(
+                "usage.glm_usage.script_not_found",
+                project_root=str(project_root),
+            )
+            return command
+
+        # Rebuild command with absolute path
+        parts[script_index] = str(glm_script)
+        resolved_command = " ".join(parts)
+        logger.debug(
+            "usage.glm_usage.resolved",
+            original=command,
+            resolved=resolved_command,
+        )
+        return resolved_command
 
     def check_should_pause(self, threshold_percent: float = 85.0) -> Tuple[bool, Optional[datetime]]:
         """Check if usage exceeds threshold
