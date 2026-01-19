@@ -108,7 +108,7 @@ auto_generation:
         - For general refinements: Use [REFINE] followed by description
         - For new tasks: Use [NEW] followed by description
         - Your response MUST be 1-2 sentences max
-      weight: 0.45  # Balanced with refine_focused at 45%
+      weight: 0.35
     - name: new_friendly
       prompt: |-
         Generate an interesting and valuable task for the workspace.
@@ -149,4 +149,4 @@ auto_generation:
         - For general refinements: Use [REFINE] followed by description
         - For new tasks: Use [NEW] followed by description
         - Your response MUST be 1-2 sentences max
-      weight: 0.10  # Reduced from 0.20 to prioritize completing existing work
+      weight: 0.20
