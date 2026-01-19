@@ -196,3 +196,157 @@ Environment variables (`.env`):
 ### Testing
 
 No formal test suite currently exists. Use `make test` for basic import validation. Manual testing via Slack CLI commands is the primary verification method.
+
+---
+
+## Single Project Focus Configuration
+
+This section documents the configuration for running Sleepless Agent in "single project mode" - continuously improving one specific git repository (e.g., `py38-cc-ds`) with automatic task generation.
+
+### Configuration Setup
+
+For single project focus, configure `config.yaml` with:
+
+```yaml
+git:
+  enabled: true
+  remote_repo_url: git@github.com:crowluya/py38-cc-ds.git
+
+auto_generation:
+  enabled: true
+  prompts:
+    - name: refine_focused
+      weight: 0.9  # 90% - focus on refining existing project
+    - name: balanced
+      weight: 0.1  # 10% - balance between new and refine
+    - name: new_friendly
+      weight: 0.0  # 0% - disable new projects
+```
+
+### Critical Prompt Format Requirement
+
+Auto-generated tasks MUST include `-p <project_id>` at the end of the description. The prompt should specify:
+
+```
+## CRITICAL Format Requirement
+Your response MUST follow this EXACT format:
+[REFINE] <description> -p py38-cc-ds
+```
+
+This ensures:
+1. Tasks are routed to the correct project workspace (`workspace/projects/py38-cc-ds/`)
+2. Git commits go to the correct repository
+3. Tasks inherit project context and dependencies
+
+### Code Fixes Applied
+
+**1. Empty Queue Handling (`auto_generator.py:109-124`)**
+
+When the task queue is empty, the system now returns "refine_focused" instead of "new_friendly" to prevent generation failures when new_friendly weight is 0:
+
+```python
+def _determine_generation_mode(self, task_count: int) -> str:
+    if task_count >= 5:
+        return "refine_focused"
+    elif task_count >= 2:
+        return "balanced"
+    else:
+        # When queue is empty, use refine_focused (new_friendly is disabled with weight=0)
+        return "refine_focused"
+```
+
+**2. Project ID Parsing (`auto_generator.py:461-485`)**
+
+Added method to extract `-p <project>` flag from AI-generated task descriptions:
+
+```python
+@staticmethod
+def _parse_project_id(task_desc: str) -> tuple[str, Optional[str]]:
+    """Parse project ID from task description (e.g., "-p py38-cc-ds")"""
+    import re
+    task_desc = task_desc.strip()
+
+    # Search for -p project_id pattern (at end of description)
+    project_match = re.search(r'\s+-p\s+(\S+)(?:\s|$)', task_desc)
+    if project_match:
+        project_id = project_match.group(1)
+        clean_desc = task_desc[:project_match.start()].strip()
+        return (clean_desc, project_id)
+
+    return (task_desc, None)
+```
+
+**3. Project Assignment (`auto_generator.py:317-341`)**
+
+Set project_id when flag is present:
+
+```python
+# Parse project ID from description (e.g., "-p py38-cc-ds")
+clean_desc, project_id = self._parse_project_id(clean_desc)
+
+# Set project_id if parsed from description
+if project_id:
+    task.project_id = project_id
+```
+
+### Project Workspace Setup
+
+For the target project (`py38-cc-ds`):
+
+1. Clone the repository to `workspace/projects/py38-cc-ds/`
+2. Set up Python environment (e.g., Python 3.8.10 via pyenv)
+3. Install project dependencies
+4. Configure API credentials in `.env.local`
+5. Add project-specific documentation (e.g., `plan_018_pycode_quality_improvement.md`)
+
+### .gitignore Configuration
+
+Prevent nested git repository issues:
+
+```
+# Sleepless Agent managed ignores
+data/
+
+# Ignore cloned projects (they have their own git repos)
+projects/
+
+# Ignore task directories that contain nested git repos
+tasks/**/.git/
+
+# Logs directory
+.logs/
+```
+
+### Model Configuration
+
+For GLM Coding (智谱方案) with Opus 4.5:
+
+```yaml
+claude_code:
+  model: claude-opus-4-5-20250929
+```
+
+### Continuous Improvement Loop
+
+Once configured, the system operates as follows:
+
+1. **Check Usage**: Monitor Claude Code Pro plan usage against thresholds
+2. **Generate Task**: When usage below threshold, auto-generate task using weighted prompts
+3. **Route to Workspace**: Tasks with `-p py38-cc-ds` execute in `workspace/projects/py38-cc-ds/`
+4. **Multi-Agent Execution**: Planner → Worker → Evaluator phases
+5. **Git Integration**: Auto-commit changes to feature branch
+6. **Repeat**: Loop continues 24/7
+
+### Troubleshooting
+
+**Symptom**: `autogen.no_prompts_available`
+- **Cause**: Queue empty + new_friendly weight = 0 → empty weighted_list
+- **Fix**: Modify `_determine_generation_mode()` to return "refine_focused" when queue empty
+
+**Symptom**: Tasks executing in wrong workspace
+- **Cause**: AI didn't include `-p <project>` flag, project_id is None
+- **Fix**: Update prompt to require EXACT format with examples
+
+**Symptom**: Git workflow fails with nested repo error
+- **Cause**: `.git` directories in task workspaces or projects/
+- **Fix**: Update `.gitignore` to exclude `projects/` and nested `.git` dirs
