@@ -30,8 +30,32 @@ logs:
 	tail -f workspace/data/agent.log
 
 test:
-	@echo "Testing imports..."
-	python -c "from sleepless_agent.runtime import SleeplessAgent; print('✓ Imports OK')"
+	pytest tests/ -v --cov=sleepless_agent --cov-report=term-missing
+
+test-unit:
+	pytest tests/unit/ -v
+
+test-integration:
+	pytest tests/integration/ -v
+
+test-quick:
+	pytest tests/ -v --no-cov -x
+
+lint:
+	ruff check src/sleepless_agent/
+	black --check src/sleepless_agent/
+	mypy src/sleepless_agent/
+
+format:
+	ruff check --fix src/sleepless_agent/
+	black src/sleepless_agent/
+
+lint-all:
+	pre-commit run --all-files
+
+install-dev:
+	pip install -e ".[dev]"
+	pre-commit install
 
 db:
 	sqlite3 workspace/data/tasks.db "SELECT id, description, status, priority FROM tasks LIMIT 10;"

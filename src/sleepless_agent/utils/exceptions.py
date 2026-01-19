@@ -1,5 +1,7 @@
 """Custom exceptions for Sleepless Agent"""
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Optional
 
@@ -12,7 +14,7 @@ class PauseException(Exception):
         message: str,
         reset_time: Optional[datetime],
         usage_percent: float,
-    ):
+    ) -> None:
         """Initialize PauseException
 
         Args:
@@ -21,5 +23,13 @@ class PauseException(Exception):
             usage_percent: Usage percentage reported by CLI
         """
         super().__init__(message)
-        self.reset_time = reset_time
-        self.usage_percent = usage_percent
+        self.reset_time: Optional[datetime] = reset_time
+        self.usage_percent: float = usage_percent
+
+    def __str__(self) -> str:
+        """Return string representation of the exception."""
+        return super().__str__()
+
+    def __repr__(self) -> str:
+        """Return detailed representation of the exception."""
+        return f"PauseException(message={super().__str__()!r}, reset_time={self.reset_time!r}, usage_percent={self.usage_percent!r})"
