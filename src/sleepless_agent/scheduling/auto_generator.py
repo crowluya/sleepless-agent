@@ -120,7 +120,8 @@ class AutoTaskGenerator:
         elif task_count >= 2:
             return "balanced"
         else:
-            return "new_friendly"
+            # When queue is empty, use refine_focused (new_friendly is disabled with weight=0)
+            return "refine_focused"
 
     def _sample_recent_tasks(self, limit: int = 5) -> list[Task]:
         """Sample recent tasks (completed or in_progress) to understand recent work
@@ -312,6 +313,9 @@ class AutoTaskGenerator:
         # Parse task type from description (for AI-generated tasks with [NEW]/[REFINE] prefix)
         clean_desc, task_type = self._parse_task_type(parsed_desc)
 
+        # Parse project ID from description (e.g., "-p py38-cc-ds")
+        clean_desc, project_id = self._parse_project_id(clean_desc)
+
         # All auto-generated tasks are low-priority
         priority = TaskPriority.GENERATED
 
@@ -330,6 +334,11 @@ class AutoTaskGenerator:
             created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             context=json.dumps(task_context) if task_context else None,
         )
+        # Set project_id if parsed from description
+        if project_id:
+            task.project_id = project_id
+            logger.debug("autogen.project_id", task_id="pending", project_id=project_id)
+
         self.session.add(task)
         self.session.flush()  # Get the ID
 
@@ -448,6 +457,32 @@ class AutoTaskGenerator:
 
         # Default to NEW if no prefix found
         return (task_desc, TaskType.NEW)
+
+    @staticmethod
+    def _parse_project_id(task_desc: str) -> tuple[str, Optional[str]]:
+        """Parse project ID from task description (e.g., "-p py38-cc-ds")
+
+        Args:
+            task_desc: Task description that may contain -p flag
+
+        Returns:
+            Tuple of (clean_description, project_id or None)
+        """
+        import re
+
+        task_desc = task_desc.strip()
+
+        # Search for -p project_id pattern (at end of description)
+        # Match: -p <project_name> where project_name doesn't contain spaces
+        project_match = re.search(r'\s+-p\s+(\S+)(?:\s|$)', task_desc)
+        if project_match:
+            project_id = project_match.group(1)
+            # Remove the -p flag from description
+            clean_desc = task_desc[:project_match.start()].strip()
+            return (clean_desc, project_id)
+
+        # No project specified
+        return (task_desc, None)
 
     async def _generate_from_prompt(self, prompt_config: AutoTaskPromptConfig, context: dict) -> Optional[str]:
         """Execute the configured prompt via Claude and return the response."""

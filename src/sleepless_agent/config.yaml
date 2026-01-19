@@ -4,7 +4,7 @@ slack:
 
 claude_code:
   binary_path: claude
-  model: claude-sonnet-4-5-20250929
+  model: claude-opus-4-5-20250929
   night_start_hour: 1
   night_end_hour: 9
   threshold_day: 100.0
@@ -37,11 +37,10 @@ auto_generation:
   prompts:
     - name: refine_focused
       prompt: |-
-        The workspace has multiple ongoing projects and tasks that need attention.
+        Generate a task to improve the py38-cc-ds project.
 
         ## Current State
         - Active tasks: {task_count} ({pending_count} pending, {in_progress_count} in progress)
-        - Many tasks are already in progress or pending
 
         ## Available Tasks to Refine
         {available_tasks}
@@ -49,32 +48,32 @@ auto_generation:
         ## Recent Work & Context
         {recent_work}
 
-        ## Workspace Constraints
-        - Tasks execute in isolated directories: workspace/tasks/<task_id>/
-        - Each task only has access to its own workspace folder and workspace/shared/
-        - Do NOT reference workspace/data/ or other system directories in task descriptions
-        - REFINE tasks reuse existing task workspaces (no new folder created)
+        ## Primary Project: py38-cc-ds
+        Target: workspace/projects/py38-cc-ds/
+        Reference: plan_018_pycode_quality_improvement.md
 
         ## Task Generation
-        Generate ONE REFINE task to continue or improve existing work:
-        - Complete partial/incomplete tasks mentioned above
-        - Follow up on outstanding items and recommendations
-        - Enhance or improve existing projects in the workspace
-        - Fix issues or improve quality of current work
-        - Add missing components to existing implementations
-        - Expand documentation or analysis from previous tasks
+        Generate ONE REFINE task for py38-cc-ds:
+        - Implement features from Plan 018 (7 core capabilities)
+        - Add tests or improve existing tests
+        - Fix bugs or improve code quality
+        - Add documentation
+        - Refactor or optimize code
 
-        IMPORTANT Format Requirements:
-        - To refine a specific task: Use [REFINE:#<task_id>] followed by description
-          Example: [REFINE:#2] Improve error handling and add edge case tests
-        - For general refinements: Use [REFINE] followed by description
-        - Your response MUST be 1-2 sentences max
+        ## CRITICAL Format Requirement
+        Your response MUST follow this EXACT format:
+        [REFINE] <description> -p py38-cc-ds
 
-        Focus on completing or improving what already exists rather than starting new projects.
+        Examples (DO NOT copy, use as format reference only):
+        [REFINE] Implement EasyOCR integration -p py38-cc-ds
+        [REFINE] Add unit tests for code generation module -p py38-cc-ds
+        [REFINE] Improve error handling in API endpoints -p py38-cc-ds
+
+        Remember: ALWAYS include "-p py38-cc-ds" at the end.
       weight: 0.9  # 90% refine - focus on existing project
     - name: balanced
       prompt: |-
-        Review the workspace state and generate a valuable task.
+        Generate a task for the py38-cc-ds project.
 
         ## Current State
         - Active tasks: {task_count} ({pending_count} pending, {in_progress_count} in progress)
@@ -85,33 +84,26 @@ auto_generation:
         ## Recent Work & Context
         {recent_work}
 
-        ## Workspace Constraints
-        - Tasks execute in isolated directories: workspace/tasks/<task_id>/
-        - Each task only has access to its own workspace folder and workspace/shared/
-        - Do NOT reference workspace/data/ or other system directories in task descriptions
-        - REFINE tasks reuse existing task workspaces (no new folder created)
+        ## Primary Project: py38-cc-ds
+        Target: workspace/projects/py38-cc-ds/
+        Reference: plan_018_pycode_quality_improvement.md
 
         ## Task Generation
-        Generate ONE valuable task (NEW or REFINE):
-        - For REFINE: improve existing work, complete partial tasks, enhance current projects
-        - For NEW: create something useful, interesting, or educational
+        Generate ONE task (NEW or REFINE) for py38-cc-ds:
+        - Implement features from Plan 018 (7 core capabilities)
+        - Add tests, fix bugs, improve code quality
+        - Add documentation or examples
+        - Optimize or refactor existing code
 
-        Task categories to consider:
-        - Software development (applications, scripts, tools, APIs)
-        - Data analysis and visualization projects
-        - Research and documentation (technical guides, comparisons, best practices)
-        - Creative writing (stories, tutorials, technical articles)
-        - System design and architecture documents
-        - Educational content and examples
-        - Automation and productivity improvements
-        - Analysis and evaluation reports
+        ## CRITICAL Format Requirement
+        Your response MUST follow this EXACT format:
+        [REFINE] <description> -p py38-cc-ds
 
-        IMPORTANT Format Requirements:
-        - To refine a specific task: Use [REFINE:#<task_id>] followed by description
-          Example: [REFINE:#1] Add comprehensive testing suite with edge cases
-        - For general refinements: Use [REFINE] followed by description
-        - For new tasks: Use [NEW] followed by description
-        - Your response MUST be 1-2 sentences max
+        Examples (DO NOT copy, use as format reference only):
+        [REFINE] Implement EasyOCR integration -p py38-cc-ds
+        [NEW] Create example script for OCR feature -p py38-cc-ds
+
+        Remember: ALWAYS include "-p py38-cc-ds" at the end.
       weight: 0.1  # 10% balance
     - name: new_friendly
       prompt: |-
