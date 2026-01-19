@@ -382,6 +382,42 @@ The agent can automatically generate tasks to keep itself productive during idle
 - System directories (`workspace/data/`) are protected
 - REFINE tasks reuse existing workspaces for continuity
 
+### Single Project Focus
+
+To focus on continuously improving a single Git repository, configure as follows:
+
+**config.yaml:**
+```yaml
+# Enable Git integration
+git:
+  enabled: true
+  remote_repo_url: git@github.com:username/your-repo.git
+  auto_create_repo: true
+
+# Enable auto-generation
+auto_generation:
+  enabled: true
+  prompts:
+    - name: refine_focused
+      weight: 0.9    # 90% - improve existing work
+    - name: balanced
+      weight: 0.1    # 10% - flexible new features
+    - name: new_friendly
+      weight: 0.0    # 0% - no new unrelated projects
+```
+
+**Branch Strategy:**
+- Single Git repo with multiple branches
+- `project/<project-name>` for project-specific work
+- `main` for merged changes
+- Start with: `/think "Initial task" -p my-project`
+
+**Workflow:**
+1. Submit first task with `-p` flag to specify project
+2. Daemon runs 24/7, auto-generating REFINE tasks
+3. All changes auto-commit to project branch
+4. Continuous improvement loop
+
 
 ## 🔧 Environment Variables
 

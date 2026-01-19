@@ -12,9 +12,9 @@ claude_code:
   usage_command: python3 glm_usage.py
 
 git:
-  enabled: false  # Set to true to enable git commits and branching
+  enabled: true  # Set to true to enable git commits and branching
   use_remote_repo: true
-  remote_repo_url: git@github.com:TimeLovercc/test5.git # !!!CHANGE THIS!!!
+  remote_repo_url: git@github.com:crowluya/open-code-py-38.git
   auto_create_repo: true
 
 agent:
@@ -71,7 +71,7 @@ auto_generation:
         - Your response MUST be 1-2 sentences max
 
         Focus on completing or improving what already exists rather than starting new projects.
-      weight: 0.45  # Restored to 45% for refine_focused mode
+      weight: 0.9  # 90% refine - focus on existing project
     - name: balanced
       prompt: |-
         Review the workspace state and generate a valuable task.
@@ -112,7 +112,7 @@ auto_generation:
         - For general refinements: Use [REFINE] followed by description
         - For new tasks: Use [NEW] followed by description
         - Your response MUST be 1-2 sentences max
-      weight: 0.35
+      weight: 0.1  # 10% balance
     - name: new_friendly
       prompt: |-
         Generate an interesting and valuable task for the workspace.
@@ -153,4 +153,4 @@ auto_generation:
         - For general refinements: Use [REFINE] followed by description
         - For new tasks: Use [NEW] followed by description
         - Your response MUST be 1-2 sentences max
-      weight: 0.20
+      weight: 0.0  # Disabled
