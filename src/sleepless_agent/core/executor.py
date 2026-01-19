@@ -1251,8 +1251,9 @@ Output should include:
 
         workspace.mkdir(parents=True, exist_ok=True)
 
-        # For REFINE tasks without specific target, copy source code to workspace
-        if task_type == "refine" and refines_task_id is None:
+        # For REFINE tasks without specific target and no project_id, copy source code to workspace
+        # (project workspaces already have their own code, don't overwrite)
+        if task_type == "refine" and refines_task_id is None and project_id is None:
             logger.info(
                 "workspace.refine_task",
                 task_id=task_id,
